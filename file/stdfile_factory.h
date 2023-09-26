@@ -14,6 +14,8 @@ public:
     [[nodiscard]] virtual std::unique_ptr<Ifile> create_stdin() const = 0;
     [[nodiscard]] virtual std::unique_ptr<Ifile> create_stdout() const = 0;
     [[nodiscard]] virtual std::unique_ptr<Ifile> create_stderr() const = 0;
+    virtual ~stdfile_factory() = default;
+
 };
 
 
