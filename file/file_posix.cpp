@@ -1,6 +1,6 @@
-//
-// Created by ADMIN on 23-Sep-23.
-//
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+
 
 #include "file_posix.h"
 
@@ -63,8 +63,8 @@ int file_posix::read(std::string &buff, size_t buffer_max_size, int *status, siz
             read_bytes += read_now;
     }
     while (read_bytes < size && read_now != 0); // i hope read now == 0 means that it has finished reading file and not some quirky undefined behavior
-//    buff.resize(buff.size() + read_bytes);
-//buff.resize()
+
+
     *true_buff_size += read_bytes;
     return 0;
 }
@@ -93,7 +93,7 @@ int file_posix::write(const std::string &buff, size_t buffer_max_size, int *stat
     return 0;
 }
 ;
-size_t file_posix::interpret_mode(open_mode mode) {
+int file_posix::interpret_mode(open_mode mode) const {
     switch (mode) {
         case FILE_READ:
             return O_RDONLY;

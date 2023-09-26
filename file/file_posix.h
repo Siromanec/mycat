@@ -1,17 +1,17 @@
-//
-// Created by ADMIN on 25-Sep-23.
-//
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+
 
 #ifndef MYCAT_FILE_POSIX_H
 #define MYCAT_FILE_POSIX_H
 
 #include "Ifile.h"
 class file_posix: public Ifile {
-    size_t fd;
-    size_t interpret_mode(open_mode mode) override;
+    int fd;
+    int interpret_mode(open_mode mode) const;
 
 public:
-    explicit file_posix(size_t fd): fd{fd} {};
+    explicit file_posix(int fd): fd{fd} {};
     file_posix (const std::string &file_name, open_mode mode);
     ~file_posix();
     virtual int read(std::string &buff, size_t buffer_max_size, int *status, size_t *true_buff_size) override;

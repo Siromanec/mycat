@@ -1,6 +1,5 @@
-//
-// Created by ADMIN on 25-Sep-23.
-//
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 
 #ifndef MYCAT_FILE_WIN_H
 #define MYCAT_FILE_WIN_H
@@ -11,7 +10,7 @@
 class file_win: public Ifile {
     HANDLE fh;
 
-    size_t interpret_mode(open_mode mode) override;
+    size_t interpret_mode(open_mode mode) const;
 public:
 
     file_win(const std::string &file_name, open_mode mode);

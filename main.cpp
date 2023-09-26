@@ -1,7 +1,5 @@
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
-//#define POSIX
-//#define WIN
 
 #include <iostream>
 #include <ctype.h>
@@ -17,14 +15,11 @@
 #define BUFF_MAX_SIZE (1024)
 
 
-//#ifdef POSIX
 #ifdef POSIX
 
 #include "file/stdfile_factory_posix.h"
 #include <fcntl.h>
-
-#endif
-
+#else
 #ifdef WIN32
 // must assert that buffer size is <= MAX_DWORD
  #include "file/stdfile_factory_win.h"
@@ -32,6 +27,9 @@
   #warning "BUFF_MAX_SIZE size bigger than MAXDWORD"
  #endif
 #endif
+
+#endif
+
 
 
 
@@ -41,8 +39,7 @@
 
 enum return_codes {
     OK,
-    NOFILE,
-    NOTOPEN,
+    NOT_OK_FILE_OPEN,
 };
 
 std::string char_to_hex(char ch) {
@@ -82,8 +79,6 @@ std::string nonprint_to_hex(const char *string) {
     }
 
     size_t str_size = str_index;
-//    new_sstream.
-//    new_sstream.reserve(string.size() + overhead_size; // it must know the new total size
     std::stringstream new_sstream(std::string(str_size + overhead_size,
                                               '\0')); //preallocation may not be worth it since a copy is made, but it should be tested in comparison without preallocation to make any conclusions
     for (size_t i = 0; i < str_size; ++i) {
@@ -94,28 +89,33 @@ std::string nonprint_to_hex(const char *string) {
             new_sstream << ch;
         }
     }
-//    for (auto ch: string) {
-//
-//    }
     return new_sstream.str();
 }
 
 int main(int argc, char *argv[]) {
     command_line_options_t command_line_options{argc, argv};
-//    std::cout << "A flag value: " << command_line_options.get_A_flag() << std::endl;
     const std::vector<std::string> &file_names = command_line_options.get_filenames();
     std::vector<std::shared_ptr<Ifile>> files;
     size_t file_count = file_names.size();
+    if (file_count == 0) {
+        return 0;
+    }
     files.reserve(file_count); // to avoid reallocation
+    try {
+        for (const auto &file_name: file_names) {
+        #ifdef POSIX
+                    files.emplace_back(new file_posix {file_name, FILE_READ});
+        #else
+                    #ifdef WIN32
+                files.emplace_back(new file_win {file_name, FILE_READ});
+            #endif
+        #endif
+        }
 
-    for (const auto &file_name: file_names) {
-#ifdef POSIX
-        files.emplace_back(new file_posix {file_name, FILE_READ});
-#else
-    #ifdef WIN32
-        files.emplace_back(new file_win {file_name, FILE_READ});
-    #endif
-#endif
+    }
+    catch (std::exception &ex) {
+        std::cerr<<ex.what() <<std::endl;
+        return NOT_OK_FILE_OPEN;
     }
 
 
@@ -136,8 +136,6 @@ int main(int argc, char *argv[]) {
   #endif
 #endif
     const std::unique_ptr<Ifile> stdout_file = stdfile_factory->create_stdout();
-//    file stdout_file{STDOUT_FILENO};
-//    buffer.size();
     for (const auto file: files) { //reference on ptr, wtf clang-tidy; the shared_ptr should be passed by value
         // while buffer is not enough -> write to stout and try again
         // buffer is not enough when it is full
@@ -149,14 +147,10 @@ int main(int argc, char *argv[]) {
                 return read_status;
             }
             //  if buffer not full -> continue
-            buffer.data()[true_buff_size + -1 + RESERVE_FOR_NULL] = '\0';
+            buffer[true_buff_size + -1 + RESERVE_FOR_NULL] = '\0';
 
             if (true_buff_size < BUFF_MAX_SIZE)
                 break;
-//            stdout_file.write(buffer, BUFF_MAX_SIZE, &status,  &true_buff_size);
-
-//            std::cout << buffer.data();
-//            buffer.clear();
             if (command_line_options.has_A_flag()) {
                 std::string hexified = nonprint_to_hex(buffer.c_str());
                 true_buff_size = hexified.size();
@@ -165,20 +159,26 @@ int main(int argc, char *argv[]) {
             else {
                 write_was_err = stdout_file->write(buffer, BUFF_MAX_SIZE, &write_status,  &true_buff_size);
             }
+
+            if(write_was_err != 0) {
+                std::cerr << "*** error occurred while writing to a file with error code " << write_status << " ***";
+                return write_status;
+            }
         }
 
     }
     if (command_line_options.has_A_flag()) {
         std::string hexified = nonprint_to_hex(buffer.c_str());
         true_buff_size = hexified.size();
-        stdout_file->write(hexified, BUFF_MAX_SIZE, &write_status,  &true_buff_size);
+        write_was_err = stdout_file->write(hexified, BUFF_MAX_SIZE, &write_status,  &true_buff_size);
     }
     else {
-        stdout_file->write(buffer, BUFF_MAX_SIZE, &write_status,  &true_buff_size);
+        write_was_err = stdout_file->write(buffer, BUFF_MAX_SIZE, &write_status,  &true_buff_size);
     }
-//    std::cout << buffer.data();
-// for some reason last newline vanishes in the stdout and in original file, despite opening in readonly mode
+    if(write_was_err != 0) {
+        std::cerr << "*** error occurred while writing to a file with error code " << write_status << " ***";
+        return write_status;
+    }
 
     return OK;
 }
-// TODO розібрати ворнінги

@@ -69,7 +69,7 @@ if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
 else()
 	set(SYSTEM_SPECIFIC_PROJECT_DEPENDENCIES
 			file/stdfile_factory_posix.h
-			file/file_posix.cpp file/file_posix.h)
+			file/file_posix.cpp file/file_posix.h file/file_libc.cpp file/file_libc.h)
 #	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -DPOSIX)
 	# since there are so many posix systems most likely, it is POSIX
 #	target_compile_definitions()
