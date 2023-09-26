@@ -6,6 +6,7 @@
 #include "options_parser.h"
 
 namespace po = boost::program_options;
+// freeBSD - pkg install boost-all
 
 command_line_options_t::command_line_options_t() {
     opt_conf.add_options()

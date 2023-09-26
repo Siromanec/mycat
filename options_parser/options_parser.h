@@ -26,7 +26,7 @@ public:
     ~command_line_options_t() = default;
 
     [[nodiscard]] std::vector<std::string> get_filenames() const { return filenames; };
-    [[nodiscard]] bool get_A_flag() const { return A_flag; };
+    [[nodiscard]] bool has_A_flag() const { return A_flag; };
 
     void parse(int ac, char **av);
 private:

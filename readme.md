@@ -6,7 +6,7 @@ Variant: <mark>VARIANT SHOULD BE HERE</mark>
 ## Prerequisites
 
 <mark>LIST LIBRARIES/TOOLS/OTHER UTILITIES THAT NEED TO BE INSTALLED (E.G. GCC, OPENMP, CMAKE ETC)</mark>
-
+boost
 ### Compilation
 
 <mark>HOW TO COMPILE YOUR PROGRAM? (RECOMMENDED: ./comile.sh)</mark>
@@ -17,6 +17,14 @@ Variant: <mark>VARIANT SHOULD BE HERE</mark>
 
 <mark>Note: For Python scripts, You must add `requirenments.txt` 
 file and add your env to the `.gitignore` file!</mark>
+#### POSIX
+#### windows MSYS
+
+```
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+ninja.exe
+```
 
 ### Usage
 

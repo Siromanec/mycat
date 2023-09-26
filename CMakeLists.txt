@@ -53,20 +53,65 @@ include(cmake/CompilerWarnings.cmake)
 ##########################################################
 # Project files, packages, libraries and so on
 ##########################################################
+#set(CMAKE_SYSTEM )
+set(PROJECT_DEPENDENCIES
+		options_parser/options_parser.cpp options_parser/options_parser.h
+		file/Ifile.h
+		file/stdfile_factory.h)
+
+if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+	set(SYSTEM_SPECIFIC_PROJECT_DEPENDENCIES
+			file/file_win.cpp file/file_win.h
+			file/stdfile_factory_win.h)
+	set(CMAKE_VERBOSE_MAKEFILE ON)
+#	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} /DWIN32) # if built with ninja
+#	set(CMAKE_TOOLCHAIN_FILE "C:/SDKs/vcpkg/scripts/buildsystems/vcpkg.cmake")
+else()
+	set(SYSTEM_SPECIFIC_PROJECT_DEPENDENCIES
+			file/stdfile_factory_posix.h
+			file/file_posix.cpp file/file_posix.h)
+#	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -DPOSIX)
+	# since there are so many posix systems most likely, it is POSIX
+#	target_compile_definitions()
+	#does not work for nonposix
+	#it should give an error for nonposix
+endif ()
+
+add_executable(${PROJECT_NAME} main.cpp ${PROJECT_DEPENDENCIES} ${SYSTEM_SPECIFIC_PROJECT_DEPENDENCIES})
 
 #! Project main executable source compilation
-add_executable(${PROJECT_NAME} main.cpp
-				options_parser/options_parser.cpp options_parser/options_parser.h file.h file.cpp)
+
 
 #! Put path to your project headers
 target_include_directories(${PROJECT_NAME} PRIVATE options_parser)
+target_include_directories(${PROJECT_NAME} PRIVATE file)
+
 
 #! Add external packages
 # options_parser requires boost::program_options library
+#message("${CMAKE_VERSION}")
+
+#message("${BOOST_ROOT}")
+#upda
+#set(Boost_INCLUDE_DIR ${_VCPKG_INSTALLED_DIR}/x64-windows/include)
+
 find_package(Boost 1.71.0 COMPONENTS program_options system REQUIRED)
 target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} Boost::program_options Boost::system)
 
+if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+	target_compile_definitions(${PROJECT_NAME} PRIVATE WIN32) #seem better than adding flag -DFLAG
+else()
+	target_compile_definitions(${PROJECT_NAME} PRIVATE POSIX)
+endif ()
+
+#-DCMAKE_TOOLCHAIN_FILE=C:\SDKs\vcpkg\scripts\buildsystems\vcpkg.cmake
+
+
+
+#-DBOOST_INCLUDEDIR="C:\SDKs\boost_1_82_0"
+#-DBOOST_LIBRARYDIR="C:\SDKs\boost_1_82_0\stage\lib"
+#-DBoost_DEBUG=ON
 ##########################################################
 # Fixed CMakeLists.txt part
 ##########################################################

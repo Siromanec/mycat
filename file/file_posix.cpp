@@ -2,32 +2,34 @@
 // Created by ADMIN on 23-Sep-23.
 //
 
-#include "file.h"
+#include "file_posix.h"
 
-#include <iostream>
 #include <sys/stat.h> // Ñòðóêòóðè (òèïè) äëÿ fstat(), lstat (), stat ().
 #include <fcntl.h> // Òèïè i êîíñòàíòè äëÿ fcntl() i open().
 #include <unistd.h> // POSIX header.
 #include <stdlib.h>
-#include <ctype.h>
-
 #include <vector>
 #include <sstream>
 
-file::file(const std::string &file_name, int mode) : total_read_bytes{0} {
+#include <vector>
+#include <sstream>
+//#include "boost/winapi"
+
+
+file_posix::file_posix(const std::string &file_name, open_mode mode){
     do {
-        fd = open(file_name.c_str(), mode);
+        fd = open(file_name.c_str(), interpret_mode(mode));
 
         if (fd == -1) {
             if (errno == EINTR) {
                 continue;
             }
             if (errno == ENOENT) {
-                std::cerr << "file '" << file_name << "' does not exist. Aborting..." << std::endl;
+                std::cerr << "*** file '" << file_name << "' does not exist. Aborting..." << std::endl;
                 throw std::exception();
 
             } else if (errno != 0) {
-                std::cerr << "Error opening file '" << file_name << "'. Aborting..." << std::endl;
+                std::cerr << "*** Error opening file '" << file_name << "'. Aborting..." << std::endl;
                 throw std::exception();
 
             }
@@ -37,12 +39,12 @@ file::file(const std::string &file_name, int mode) : total_read_bytes{0} {
     } while (true);
 }
 
-file::~file() {
+file_posix::~file_posix() {
     if (fd != STDIN_FILENO && fd != STDOUT_FILENO && fd != STDERR_FILENO)
         close(fd);
 }
 
-int file::read(std::string &buff, size_t buffer_max_size, int *status, size_t *true_buff_size) {
+int file_posix::read(std::string &buff, size_t buffer_max_size, int *status, size_t *true_buff_size) {
     ssize_t read_bytes = 0;
 
     size_t size = buffer_max_size - *true_buff_size;
@@ -64,13 +66,13 @@ int file::read(std::string &buff, size_t buffer_max_size, int *status, size_t *t
 //    buff.resize(buff.size() + read_bytes);
 //buff.resize()
     *true_buff_size += read_bytes;
-    total_read_bytes += read_bytes;
     return 0;
 }
-int file::write(const std::string &buff, size_t buffer_max_size, int *status, size_t true_buff_size) {
+
+int file_posix::write(const std::string &buff, size_t buffer_max_size, int *status, size_t *true_buff_size){
     ssize_t written_bytes = 0;
 
-    size_t size = true_buff_size;
+    size_t size = *true_buff_size;
     ssize_t written_now = 0;
     while (written_bytes  < size) {
         written_now = ::write(fd, buff.data() + written_bytes ,
@@ -86,6 +88,22 @@ int file::write(const std::string &buff, size_t buffer_max_size, int *status, si
             written_bytes  += written_now;
     }
 //    *true_buff_size += written_bytes ;
+    *true_buff_size = 0;
+
     return 0;
 }
 ;
+size_t file_posix::interpret_mode(open_mode mode) {
+    switch (mode) {
+        case FILE_READ:
+            return O_RDONLY;
+        case FILE_WRITE:
+            return O_WRONLY;
+        case FILE_READWRITE:
+            return O_RDWR;
+        default:
+            std::cerr << "*** not implemented ***" << std::endl;
+            throw std::exception();
+    }
+    return 0;
+}

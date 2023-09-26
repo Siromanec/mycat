@@ -1,22 +1,41 @@
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+//#define POSIX
+//#define WIN
 
 #include <iostream>
-#include <sys/stat.h> // Ñòðóêòóðè (òèïè) äëÿ fstat(), lstat (), stat ().
-#include <fcntl.h> // Òèïè i êîíñòàíòè äëÿ fcntl() i open().
-#include <unistd.h> // POSIX header.
-#include <stdlib.h>
 #include <ctype.h>
 
+#include <memory>
 #include <vector>
-#include <sstream>
+
 #include "options_parser.h"
-#include "file.h"
-#include <cstdint>
+#include "file/Ifile.h"
 //#define CNTRL_SPACE_TEST
 #define PRINT_SPACE_TEST
 #define RESERVE_FOR_NULL 1
 #define BUFF_MAX_SIZE (1024)
+
+
+//#ifdef POSIX
+#ifdef POSIX
+
+#include "file/stdfile_factory_posix.h"
+#include <fcntl.h>
+
+#endif
+
+#ifdef WIN32
+// must assert that buffer size is <= MAX_DWORD
+ #include "file/stdfile_factory_win.h"
+ #if BUFF_MAX_SIZE > MAXDWORD
+  #warning "BUFF_MAX_SIZE size bigger than MAXDWORD"
+ #endif
+#endif
+
+
+
+
 
 #define HEX_CHAR_SIZE 4
 
@@ -81,58 +100,54 @@ std::string nonprint_to_hex(const char *string) {
     return new_sstream.str();
 }
 
-void closeall(std::vector<size_t> &file_descriptors) {
-    //TODO Handling close errors
-    while (!file_descriptors.empty()) {
-        close(file_descriptors.back());
-        file_descriptors.pop_back();
-    }
-}
-
-//int writebuffer(int fd, const std::string &buffer, int *status) {
-//    ssize_t written_bytes = 0;
-//    while (written_bytes < buffer.size()) {
-//        ssize_t written_now = write(fd, buffer.c_str() + written_bytes,
-//                                    buffer.size() - written_bytes);
-//        if (written_now == -1) {
-//            if (errno == EINTR)
-//                continue;
-//            else {
-//                *status = errno;
-//                return -1;
-//            }
-//        } else
-//            written_bytes += written_now;
-//    }
-//    return 0;
-//}
-
-
 int main(int argc, char *argv[]) {
     command_line_options_t command_line_options{argc, argv};
 //    std::cout << "A flag value: " << command_line_options.get_A_flag() << std::endl;
     const std::vector<std::string> &file_names = command_line_options.get_filenames();
-    std::vector<file> files;
+    std::vector<std::shared_ptr<Ifile>> files;
     size_t file_count = file_names.size();
     files.reserve(file_count); // to avoid reallocation
 
     for (const auto &file_name: file_names) {
-        files.emplace_back(file_name, O_RDONLY);
+#ifdef POSIX
+        files.emplace_back(new file_posix {file_name, FILE_READ});
+#else
+    #ifdef WIN32
+        files.emplace_back(new file_win {file_name, FILE_READ});
+    #endif
+#endif
     }
 
 
     std::string buffer;
     buffer.reserve(BUFF_MAX_SIZE + RESERVE_FOR_NULL);
-    int status = 0;
+    int read_status = 0;
+    int write_status = 0;
+    int read_was_err = 0;
+    int write_was_err = 0;
+
     size_t true_buff_size = 0;
-    file stdout_file{STDOUT_FILENO};
+    std::unique_ptr<stdfile_factory> stdfile_factory;
+#ifdef POSIX
+    stdfile_factory = std::make_unique<stdfile_factory_posix>();
+#else
+ #ifdef WIN32
+    stdfile_factory = std::make_unique<stdfile_factory_win>();
+  #endif
+#endif
+    const std::unique_ptr<Ifile> stdout_file = stdfile_factory->create_stdout();
+//    file stdout_file{STDOUT_FILENO};
 //    buffer.size();
-    for (auto& file: files) {
+    for (const auto file: files) { //reference on ptr, wtf clang-tidy; the shared_ptr should be passed by value
         // while buffer is not enough -> write to stout and try again
         // buffer is not enough when it is full
         // regular buff.size will not work from the box
         while (true_buff_size < BUFF_MAX_SIZE) {
-            file.read(buffer, BUFF_MAX_SIZE, &status,  &true_buff_size);
+            read_was_err = file->read(buffer, BUFF_MAX_SIZE, &read_status,  &true_buff_size);
+            if(read_was_err != 0) {
+                std::cerr << "*** error occurred while reading a file with error code " << read_status << " ***";
+                return read_status;
+            }
             //  if buffer not full -> continue
             buffer.data()[true_buff_size + -1 + RESERVE_FOR_NULL] = '\0';
 
@@ -142,29 +157,28 @@ int main(int argc, char *argv[]) {
 
 //            std::cout << buffer.data();
 //            buffer.clear();
-            if (command_line_options.get_A_flag() == true) {
+            if (command_line_options.has_A_flag()) {
                 std::string hexified = nonprint_to_hex(buffer.c_str());
-                stdout_file.write(hexified.c_str(), BUFF_MAX_SIZE, &status,  hexified.size());
+                true_buff_size = hexified.size();
+                write_was_err = stdout_file->write(hexified, BUFF_MAX_SIZE, &write_status,  &true_buff_size);
             }
             else {
-                stdout_file.write(buffer, BUFF_MAX_SIZE, &status,  true_buff_size);
+                write_was_err = stdout_file->write(buffer, BUFF_MAX_SIZE, &write_status,  &true_buff_size);
             }
-            true_buff_size = 0;
         }
 
     }
-    if (command_line_options.get_A_flag() == true) {
+    if (command_line_options.has_A_flag()) {
         std::string hexified = nonprint_to_hex(buffer.c_str());
-        stdout_file.write(hexified.c_str(), BUFF_MAX_SIZE, &status,  hexified.size());
+        true_buff_size = hexified.size();
+        stdout_file->write(hexified, BUFF_MAX_SIZE, &write_status,  &true_buff_size);
     }
     else {
-        stdout_file.write(buffer, BUFF_MAX_SIZE, &status,  true_buff_size);
+        stdout_file->write(buffer, BUFF_MAX_SIZE, &write_status,  &true_buff_size);
     }
 //    std::cout << buffer.data();
-
-
-
 // for some reason last newline vanishes in the stdout and in original file, despite opening in readonly mode
 
     return OK;
 }
+// TODO розібрати ворнінги
