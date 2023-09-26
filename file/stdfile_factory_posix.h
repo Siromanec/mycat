@@ -22,6 +22,8 @@ class stdfile_factory_posix: public stdfile_factory {
     std::unique_ptr<Ifile> create_stderr() const override {
         return std::make_unique<file_posix>(STDERR_FILENO);
     };
+
+
 };
 
 
