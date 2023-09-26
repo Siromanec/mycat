@@ -1,6 +1,6 @@
 <mark>Template for your README. Remove all unused parts and instructions</mark>
 
-# Lab work <mark>NUMBER</mark>: <mark>SHORT TOPIC</mark>
+# Lab work <mark>2</mark>: <mark>mycat</mark>
 Authors (team): <mark>AUTHORS WITH GITHUB LINKS</mark><br> https://github.com/Siromanec
 Variant: <mark>VARIANT SHOULD BE HERE</mark> mycat
 ## Prerequisites
