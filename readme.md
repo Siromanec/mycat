@@ -6,7 +6,16 @@ Variant: <mark>VARIANT SHOULD BE HERE</mark>
 ## Prerequisites
 
 <mark>LIST LIBRARIES/TOOLS/OTHER UTILITIES THAT NEED TO BE INSTALLED (E.G. GCC, OPENMP, CMAKE ETC)</mark>
+#### POSIX
+cmake
+make
 boost
+GCC
+#### WIN
+cmake
+ninja
+boost
+mingw
 ### Compilation
 
 <mark>HOW TO COMPILE YOUR PROGRAM? (RECOMMENDED: ./comile.sh)</mark>
@@ -18,6 +27,11 @@ boost
 <mark>Note: For Python scripts, You must add `requirenments.txt` 
 file and add your env to the `.gitignore` file!</mark>
 #### POSIX
+```
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+```
 #### windows MSYS
 
 ```
@@ -32,6 +46,10 @@ ninja.exe
 
 <mark>Note: if your project needs or generates any data, media and so on -- put them
 into the data folder</mark> 
+#### POSIX
+`./mycat file1 file2 ... [-A? | -h]`
+#### WIN
+`./mycat.exe file1 file2 ... [-A?| -h]`
 
 ### Important!
 
@@ -40,6 +58,13 @@ into the data folder</mark>
 ### Results
 
 <mark>DESCRIBE THE RESULTS OF THE WORK YOU DID. WHAT DID YOU LEARN OR FIND INTERESTING?</mark>
+
+Перевіряв роботу на WINDOWS, LINUX, FREEBSD
+
+Звіт про запуск з FREEBSD
+
+
+
 
 # Additional tasks
 <mark>IF APPLICABLE, LIST ALL THE EXTRA FEATURES YOU ADDED. PROVIDE DETAILS<mark>
