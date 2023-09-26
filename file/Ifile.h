@@ -21,6 +21,8 @@ public:
     virtual int read(std::string & buff, size_t buffer_max_size, int *status, size_t *true_buff_size) = 0;
     virtual int write(const std::string & buff, size_t buffer_max_size, int *status, size_t *true_buff_size) = 0;
 //    virtual ~Ifile() = 0;
+    virtual ~Ifile() = default;
+
 
 };
 

@@ -8,8 +8,8 @@
 #include <memory>
 class stdfile_factory {
 public:
-    stdfile_factory() = default;
-    ~stdfile_factory() = default;
+//    virtual stdfile_factory() = default;
+//    ~stdfile_factory() = default;
 
     [[nodiscard]] virtual std::unique_ptr<Ifile> create_stdin() const = 0;
     [[nodiscard]] virtual std::unique_ptr<Ifile> create_stdout() const = 0;
